@@ -577,16 +577,31 @@ function addKind() {
   $('#f-new-k').value = ''; msg('');
   drawPicks(k); drawKinds();
 }
-function openSheet(key) {
+/* ---------- 창 열기/닫기 + 뒤로 가기 버튼 ---------- */
+let ovDepth = 0, ignorePop = 0;
+function pushOv() { try { history.pushState({ ov: 1 }, ''); ovDepth++; } catch (e) { /* 무시 */ } }
+function popOv() { if (ovDepth > 0) { ovDepth--; ignorePop++; try { history.back(); } catch (e) { ignorePop--; } } }
+function showOv(sel) { const el = $(sel); if (!el.hidden) return; el.hidden = false; pushOv(); }
+function hideOv(sel) { const el = $(sel); if (el.hidden) return; el.hidden = true; popOv(); }
+window.addEventListener('popstate', () => {   // 휴대폰 뒤로 가기: 가장 위에 열린 창부터 닫는다
+  if (ignorePop > 0) { ignorePop--; return; }
+  if (ovDepth <= 0) return;
+  ovDepth--;
+  for (const id of ['#confirm', '#settings', '#sheet']) {
+    if (!$(id).hidden) { $(id).hidden = true; if (id === '#confirm') confirmYes = null; return; }
+  }
+});
+
+function openSheet(key, auto) {
   loadDay(key);
-  $('#sheet').hidden = false;
-  setTimeout(() => $('#f-did').focus(), 50);
+  showOv('#sheet');
+  if (!auto) { try { $('#f-did').focus({ preventScroll: true }); } catch (e) { /* 무시 */ } }   // 앱을 켤 때 저절로 열린 경우에는 키보드를 띄우지 않는다
 }
 function pickDate(key) {
   if (!key || key > todayKey() || key === editKey) { $('#f-date').value = editKey; return; }   // 미래 날짜는 안 됨
   loadDay(key);
 }
-function closeSheet() { $('#sheet').hidden = true; }
+function closeSheet() { hideOv('#sheet'); }
 function drawCustomList() {
   const mine = MOODS.filter((m) => m.custom);
   $('#f-custom').innerHTML = mine.length
@@ -657,9 +672,14 @@ function resizePhoto(file) {
 
 /* ---------- 지우기 확인 ---------- */
 let confirmYes = null;
-function ask(text, yes) { $('#confirm-text').textContent = text; confirmYes = yes; $('#confirm').hidden = false; }
+function ask(text, yes) { $('#confirm-text').textContent = text; confirmYes = yes; showOv('#confirm'); }
 
 /* ---------- 저녁 알림 ---------- */
+function showNotice(title, body) {
+  const opts = { body, icon: './icon-192.png', badge: './icon-192.png', tag: 'daily' };
+  const old = () => { try { new Notification(title, opts); } catch (e) { /* 무시 */ } };
+  if ('serviceWorker' in navigator) navigator.serviceWorker.ready.then((reg) => reg.showNotification(title, opts)).catch(old); else old();
+}
 let bannerHiddenFor = '';
 function checkReminder() {
   const b = $('#banner');
@@ -671,7 +691,7 @@ function checkReminder() {
     b.textContent = '🌙 오늘 기록할 시간이에요. 아래 큰 버튼을 눌러 주세요.';
     const flag = 'notified-' + todayKey();
     if (!sessionStorage.getItem(flag) && 'Notification' in window && Notification.permission === 'granted') {
-      try { sessionStorage.setItem(flag, '1'); new Notification('오늘 안녕?', { body: '오늘 하루를 한 줄로 남겨 볼까요?', icon: './icon-192.png' }); } catch (e) { /* 무시 */ }
+      try { sessionStorage.setItem(flag, '1'); showNotice('오늘 안녕?', '오늘 하루를 한 줄로 남겨 볼까요?'); } catch (e) { /* 무시 */ }
     }
   }
 }
@@ -772,6 +792,7 @@ $('#btn-record').addEventListener('click', () => {
   openingFromFab = true;
   const r = $('#btn-record').getBoundingClientRect();
   fireworks(r.left + r.width / 2, r.top + r.height / 2);
+  try { if (navigator.vibrate) navigator.vibrate([12, 40, 18]); } catch (e) { /* 무시 */ }
   setTimeout(() => { openingFromFab = false; openSheet(todayKey()); }, 450);   // 폭죽이 터지는 걸 보고 나서 기록 창이 열린다
 });
 $('#btn-plus').addEventListener('click', () => openSheet(todayKey()));
@@ -802,8 +823,8 @@ $('#f-delete').addEventListener('click', () => {
     if (save(KEY_ENTRIES, next)) { entries = next; closeSheet(); render(); checkReminder(); }
   });
 });
-$('#confirm-no').addEventListener('click', () => { $('#confirm').hidden = true; confirmYes = null; });
-$('#confirm-yes').addEventListener('click', () => { $('#confirm').hidden = true; const f = confirmYes; confirmYes = null; if (f) f(); });
+$('#confirm-no').addEventListener('click', () => { hideOv('#confirm'); confirmYes = null; });
+$('#confirm-yes').addEventListener('click', () => { hideOv('#confirm'); const f = confirmYes; confirmYes = null; if (f) f(); });
 
 $('#content').addEventListener('change', (e) => {
   const i = e.target.dataset.todo;
@@ -823,7 +844,7 @@ function fillPlaces() {
   $('#s-place').value = p.name === '현재 위치' ? 'gps' : String(Math.max(0, PLACES.findIndex((x) => x[0] === p.name)));
 }
 $('#btn-settings').addEventListener('click', () => {
-  $('#s-time').value = settings.time; $('#s-on').checked = !!settings.on; fillPlaces(); $('#s-msg').hidden = true; $('#settings').hidden = false;
+  $('#s-time').value = settings.time; $('#s-on').checked = !!settings.on; fillPlaces(); fillInstall(); $('#s-msg').hidden = true; showOv('#settings');
 });
 $('#s-gps').addEventListener('click', () => {
   const m = $('#s-msg'); m.hidden = false;
@@ -834,7 +855,7 @@ $('#s-gps').addEventListener('click', () => {
     save(KEY_SETTINGS, settings); fillPlaces(); m.textContent = '내 위치로 정했어요. 저장을 누르면 날씨가 바뀌어요.';
   }, () => { m.textContent = '위치를 가져오지 못했어요. 위치 허용을 확인하거나 도시를 골라 주세요.'; }, { timeout: 10000 });
 });
-$('#settings-close').addEventListener('click', () => { $('#settings').hidden = true; });
+$('#settings-close').addEventListener('click', () => { hideOv('#settings'); });
 $('#s-save').addEventListener('click', async () => {
   const sel = $('#s-place').value;
   const place = sel === 'gps' ? getPlace() : { name: PLACES[Number(sel)][0], lat: PLACES[Number(sel)][1], lon: PLACES[Number(sel)][2] };
@@ -844,23 +865,60 @@ $('#s-save').addEventListener('click', async () => {
   if (settings.on && 'Notification' in window && Notification.permission === 'default') {
     try { await Notification.requestPermission(); } catch (e) { /* 무시 */ }
   }
-  $('#settings').hidden = true; checkReminder();
+  hideOv('#settings'); checkReminder();
 });
 document.addEventListener('keydown', (e) => {
   if (e.key !== 'Escape') return;
-  if (!$('#confirm').hidden) $('#confirm').hidden = true;
+  if (!$('#confirm').hidden) { hideOv('#confirm'); confirmYes = null; }
   else if (!$('#sheet').hidden) closeSheet();
-  else if (!$('#settings').hidden) $('#settings').hidden = true;
+  else if (!$('#settings').hidden) hideOv('#settings');
 });
 $('#banner').addEventListener('click', () => { bannerHiddenFor = todayKey(); checkReminder(); });
 document.addEventListener('visibilitychange', () => { if (!document.hidden) { render(); checkReminder(); loadWeather(false); } });
 setInterval(checkReminder, 60000);
 
+/* ---------- 휴대폰 최적화 ---------- */
+// 키보드가 올라와도 창이 가려지지 않게: 보이는 영역(visualViewport)에 맞춘다 (아이폰 · 안드로이드 공통)
+function syncViewport() {
+  const vv = window.visualViewport;
+  if (!vv) return;
+  const root = document.documentElement.style;
+  root.setProperty('--vvh', vv.height + 'px');
+  root.setProperty('--vvt', vv.offsetTop + 'px');
+  const el = document.activeElement;
+  if (el && /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName) && el.closest('.sheet')) setTimeout(() => { try { el.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (e) { /* 무시 */ } }, 80);
+}
+if (window.visualViewport) { visualViewport.addEventListener('resize', syncViewport); visualViewport.addEventListener('scroll', syncViewport); syncViewport(); }
+
+// 홈 화면에 설치 안내 (아이폰은 사파리 안내, 안드로이드는 설치 버튼)
+let deferredInstall = null;
+window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredInstall = e; });
+window.addEventListener('appinstalled', () => { deferredInstall = null; });
+function fillInstall() {
+  const box = $('#s-install');
+  const standalone = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone;
+  if (standalone) { box.hidden = true; return; }
+  box.hidden = false;
+  const ios = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  $('#s-install-text').textContent = ios ? '사파리 아래쪽의 공유 버튼(네모에서 화살표가 나온 모양)을 누르고 "홈 화면에 추가"를 눌러요.'
+    : deferredInstall ? '아래 버튼을 누르면 홈 화면에 앱으로 설치돼요.' : '크롬 오른쪽 위 메뉴(⋮)에서 "홈 화면에 추가" 또는 "앱 설치"를 눌러요.';
+  $('#s-install-btn').hidden = ios || !deferredInstall;
+}
+$('#s-install-btn').addEventListener('click', async () => {
+  if (!deferredInstall) return;
+  deferredInstall.prompt();
+  try { await deferredInstall.userChoice; } catch (e) { /* 무시 */ }
+  deferredInstall = null; fillInstall();
+});
+
+// 기록이 브라우저에 의해 저절로 지워지지 않도록 저장 공간을 보호해 달라고 요청한다 (가능한 기기에서만)
+try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) { /* 무시 */ }
+
 /* ---------- 시작 ---------- */
 render();
 checkReminder();
 loadWeather(false);
-openSheet(todayKey());   // 앱을 켜면 바로 오늘 기록 창을 연다
+openSheet(todayKey(), true);   // 앱을 켜면 바로 오늘 기록 창을 연다
 
 if ('serviceWorker' in navigator) {
   const had = !!navigator.serviceWorker.controller;

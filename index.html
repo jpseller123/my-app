@@ -5,13 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>오늘 안녕?</title>
   <meta name="theme-color" content="#FBDCC8">
+  <meta name="color-scheme" content="light">
+  <meta name="format-detection" content="telephone=no, date=no, address=no, email=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="오늘 안녕?">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="icon" type="image/png" href="./icon-192.png">
-  <link rel="apple-touch-icon" href="./apple-touch-icon.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png">
   <link rel="stylesheet" href="./style.css">
 </head>
 <body>
@@ -139,6 +141,12 @@
         <button type="button" class="pill ghost" id="s-gps" style="margin-top:10px">내 위치 사용</button>
         <p class="hint" id="s-msg" hidden></p>
         <p class="hint">날씨는 Open-Meteo(무료 날씨 서비스)에서 가져와요. 보내는 것은 장소의 위도 · 경도 숫자뿐이고, 이름이나 기록은 보내지 않아요.</p>
+
+        <div id="s-install" hidden>
+          <div class="field-label">휴대폰에 앱으로 설치</div>
+          <p class="hint" id="s-install-text" style="margin-top:0"></p>
+          <button type="button" class="pill coral" id="s-install-btn" hidden style="margin-top:10px">설치하기</button>
+        </div>
       </div>
       <div class="sheet-foot">
         <button class="pill coral grow" id="s-save">저장</button>
