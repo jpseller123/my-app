@@ -900,7 +900,11 @@ function fillInstall() {
   if (standalone) { box.hidden = true; return; }
   box.hidden = false;
   const ios = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-  $('#s-install-text').textContent = ios ? '사파리 아래쪽의 공유 버튼(네모에서 화살표가 나온 모양)을 누르고 "홈 화면에 추가"를 눌러요.'
+  const iosChrome = /CriOS/.test(navigator.userAgent);   // 아이폰의 크롬
+  const iosText = iosChrome
+    ? '크롬의 공유 버튼(주소창 오른쪽, 또는 ⋯ 메뉴 안)을 누르고 "홈 화면에 추가"를 눌러요. 메뉴에 안 보이면 사파리에서 같은 방법으로 해 주세요. (iOS 16.4 이상) 설치하면 기록이 안전하게 보관되고 알림도 받을 수 있어요.'
+    : '사파리 아래쪽의 공유 버튼(네모에서 화살표가 나온 모양)을 누르고 "홈 화면에 추가"를 눌러요. 설치하면 기록이 안전하게 보관되고 알림도 받을 수 있어요.';
+  $('#s-install-text').textContent = ios ? iosText
     : deferredInstall ? '아래 버튼을 누르면 홈 화면에 앱으로 설치돼요.' : '크롬 오른쪽 위 메뉴(⋮)에서 "홈 화면에 추가" 또는 "앱 설치"를 눌러요.';
   $('#s-install-btn').hidden = ios || !deferredInstall;
 }

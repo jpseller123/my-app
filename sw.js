@@ -1,6 +1,6 @@
 // 서비스 워커: 인터넷이 되면 항상 새 파일을 먼저 받고, 안 되면 저장해 둔 파일로 연다.
 // 파일을 고칠 때마다 아래 버전 숫자를 올린다.
-const CACHE = 'my-app-cache-v29';
+const CACHE = 'my-app-cache-v30';
 const FILES = [
   './', './index.html', './style.css', './app.js',
   './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'
