@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>오늘 안녕?</title>
+  <meta name="theme-color" content="#FBDCC8">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="오늘 안녕?">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" type="image/png" href="./icon-192.png">
+  <link rel="apple-touch-icon" href="./apple-touch-icon.png">
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <div class="app">
+    <header class="top" id="top"></header>
+
+    <div class="banner" id="banner" hidden></div>
+
+    <main class="content" id="content"></main>
+
+    <button class="fab" id="btn-record" aria-label="오늘 기록 쓰기">
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l4-1 10.5-10.5a2.1 2.1 0 0 0-3-3L5 16z"/><path d="M14 7l3 3"/></svg>
+      <span>쓰기</span>
+    </button>
+
+    <nav class="tabbar" aria-label="메뉴">
+      <button class="tb" data-tab="today">
+        <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11l8-7 8 7v8a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z"/></svg>
+        <span>홈</span>
+      </button>
+      <button class="tb" data-tab="summary">
+        <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="4"/><path d="M8 3v4M16 3v4M4 10h16"/></svg>
+        <span>정리</span>
+      </button>
+      <button class="plus" id="btn-plus" aria-label="오늘 기록 쓰기">
+        <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+      </button>
+      <button class="tb" data-tab="pattern">
+        <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 20v-9M12 20V5M18 20v-6"/></svg>
+        <span>통계</span>
+      </button>
+      <button class="tb" id="btn-settings">
+        <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 17h12l-1.5-2v-4a4.5 4.5 0 0 0-9 0v4z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>
+        <span>알림</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- 기록 쓰는 창 -->
+  <div class="sheet-wrap" id="sheet" hidden>
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+      <div class="sheet-head">
+        <h2 id="sheet-title">오늘 기록</h2>
+        <button class="icon-btn" id="sheet-close" aria-label="닫기">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+      </div>
+      <div class="sheet-body">
+        <div class="field-label">날짜 <small>(지난 날도 고를 수 있어요)</small></div>
+        <div class="photo-row">
+          <input type="date" id="f-date" aria-label="기록할 날짜" style="flex:1;min-width:0">
+          <button type="button" class="pill mint" id="f-today">오늘</button>
+          <button type="button" class="pill mint" id="f-yest">어제</button>
+        </div>
+
+        <label class="field-label" for="f-did" id="f-did-label">오늘 한 일</label>
+        <textarea id="f-did" rows="3" placeholder="오늘 뭘 했나요? 한 줄이면 충분해요"></textarea>
+
+        <div class="field-label">오늘 기분</div>
+        <div class="moods" id="f-moods"></div>
+        <button type="button" class="pill ghost" id="f-mood-add" style="margin-top:10px">＋ 이모지 추가</button>
+        <div id="f-mood-panel" class="card" style="margin:10px 0 0" hidden>
+          <label class="field-label" for="f-new-e" style="margin-top:0">새 이모지 <small>(키보드의 이모지 키로 한 개)</small></label>
+          <input type="text" id="f-new-e" maxlength="12" placeholder="예) 🌈" autocomplete="off">
+          <label class="field-label" for="f-new-n">이름 <small>(없어도 돼요)</small></label>
+          <input type="text" id="f-new-n" maxlength="12" placeholder="예) 기분 최고" autocomplete="off">
+          <label class="field-label" for="f-new-s">어떤 기분인가요? <small>(통계에 쓰여요)</small></label>
+          <select id="f-new-s">
+            <option value="5">아주 좋은 기분</option>
+            <option value="4">좋은 기분</option>
+            <option value="3" selected>보통</option>
+            <option value="2">가라앉은 기분</option>
+            <option value="1">힘든 기분</option>
+          </select>
+          <button type="button" class="pill coral" id="f-new-add" style="width:100%;margin-top:12px">추가하기</button>
+        </div>
+        <div id="f-custom"></div>
+
+        <label class="field-label" for="f-todo">해야 할 일 <small>(한 줄에 하나씩)</small></label>
+        <textarea id="f-todo" rows="3" placeholder="예) 병원 예약&#10;장보기"></textarea>
+
+        <div class="field-label">오늘의 취향 <small>(눌러서 적어요)</small></div>
+        <div id="f-picks"></div>
+        <button type="button" class="pill ghost" id="f-pick-add" style="margin-top:10px">＋ 항목 추가</button>
+        <div id="f-pick-panel" class="card" style="margin:10px 0 0" hidden>
+          <label class="field-label" for="f-new-k" style="margin-top:0">새 항목 이름</label>
+          <input type="text" id="f-new-k" maxlength="10" placeholder="예) 드라마" autocomplete="off">
+          <button type="button" class="pill coral" id="f-new-k-add" style="width:100%;margin-top:12px">추가하기</button>
+        </div>
+        <div id="f-kinds"></div>
+
+        <div class="field-label">사진</div>
+        <div class="photo-row">
+          <label class="pill mint" for="f-photo">사진 고르기</label>
+          <input type="file" id="f-photo" accept="image/*" hidden>
+          <button class="pill ghost" id="f-photo-del" hidden>사진 빼기</button>
+        </div>
+        <img id="f-photo-preview" class="photo-preview" alt="" hidden>
+        <p class="hint" id="f-msg" hidden></p>
+      </div>
+      <div class="sheet-foot">
+        <button class="pill ghost danger" id="f-delete" hidden>지우기</button>
+        <button class="pill coral grow" id="f-save">저장</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 설정 창 -->
+  <div class="sheet-wrap" id="settings" hidden>
+    <div class="sheet" role="dialog" aria-modal="true" aria-label="저녁 알림">
+      <div class="sheet-head">
+        <h2>저녁 알림</h2>
+        <button class="icon-btn" id="settings-close" aria-label="닫기">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+      </div>
+      <div class="sheet-body">
+        <label class="field-label" for="s-time">알림 시간</label>
+        <input type="time" id="s-time" value="21:00">
+        <label class="check"><input type="checkbox" id="s-on"> 알림 켜기</label>
+        <p class="hint">앱이 열려 있을 때 이 시간이 지나면 "오늘 기록할 시간이에요"라고 알려 줘요. 앱을 닫아 둔 때는 웹앱 한계로 알림이 안 올 수 있어요. 휴대폰 기본 알람 앱에도 "오늘 안녕? 쓰기" 알람을 맞춰 두면 확실해요.</p>
+
+        <div class="field-label">날씨 장소 <small>(안녕하세요 옆 날씨)</small></div>
+        <select id="s-place" aria-label="날씨 장소"></select>
+        <button type="button" class="pill ghost" id="s-gps" style="margin-top:10px">내 위치 사용</button>
+        <p class="hint" id="s-msg" hidden></p>
+        <p class="hint">날씨는 Open-Meteo(무료 날씨 서비스)에서 가져와요. 보내는 것은 장소의 위도 · 경도 숫자뿐이고, 이름이나 기록은 보내지 않아요.</p>
+      </div>
+      <div class="sheet-foot">
+        <button class="pill coral grow" id="s-save">저장</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 지우기 확인 창 -->
+  <div class="sheet-wrap center" id="confirm" hidden>
+    <div class="dialog" role="alertdialog" aria-modal="true">
+      <p id="confirm-text">정말 지울까요?</p>
+      <div class="dialog-btns">
+        <button class="pill ghost grow" id="confirm-no">아니요</button>
+        <button class="pill coral grow" id="confirm-yes">네, 지울게요</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="./app.js"></script>
+</body>
+</html>
